@@ -1,0 +1,85 @@
+@startuml er
+!define table(x) class x << (T,#FFAAAA) >>
+!define primary_key(x) <u>x</u>
+!define foreign_key(x) <color:blue>x</color>
+
+table(User) {
+  primary_key(id): UUID
+  email: string
+  password_hash: string
+  full_name: string
+  role: enum
+}
+
+table(House) {
+  primary_key(id): UUID
+  foreign_key(user_id): UUID
+  name: string
+  address: string
+}
+
+table(UserPermission) {
+  primary_key(id): UUID
+  foreign_key(user_id): UUID
+  foreign_key(house_id): UUID
+  access_level: enum
+}
+
+User --> House : 1 ко многим
+User --> UserPermission
+House --> UserPermission
+
+!define table(x) class x << (T,#AAF0D1) >>
+!define primary_key(x) <u>x</u>
+!define foreign_key(x) <color:blue>x</color>
+
+table(DeviceType) {
+  primary_key(id): UUID
+  name: string
+  category: string
+  supports_telemetry: bool
+}
+
+table(Device) {
+  primary_key(id): UUID
+  foreign_key(type_id): UUID
+  foreign_key(house_id): UUID
+  serial_number: string
+  name: string
+  status: enum
+}
+
+table(DeviceConfig) {
+  primary_key(id): UUID
+  foreign_key(device_id): UUID
+  param_key: string
+  param_value: string
+}
+
+DeviceType --> Device
+Device --> DeviceConfig
+
+!define table(x) class x << (T,#D5AAFF) >>
+!define primary_key(x) <u>x</u>
+!define foreign_key(x) <color:blue>x</color>
+
+table(TelemetryData) {
+  primary_key(id): UUID
+  foreign_key(device_id): UUID
+  timestamp: datetime
+  key: string
+  value: float
+}
+
+table(TelemetrySummary) {
+  primary_key(id): UUID
+  foreign_key(device_id): UUID
+  interval: string
+  avg_value: float
+  max_value: float
+  min_value: float
+}
+
+TelemetryData --> TelemetrySummary
+
+@enduml

@@ -1,0 +1,138 @@
+@startuml code
+
+' ===== User Service =====
+package "User Service" {
+  class User {
+    +UUID id
+    +String email
+    +String passwordHash
+    +String fullName
+    +Role role
+    +login(credentials)
+    +updateProfile(data)
+    +changePassword(old, new)
+  }
+
+  class House {
+    +UUID id
+    +UUID userId
+    +String name
+    +String address
+    +addDevice(device: Device)
+    +removeDevice(deviceId)
+  }
+
+  class UserPermission {
+    +UUID id
+    +UUID userId
+    +UUID houseId
+    +AccessLevel accessLevel
+    +grantAccess()
+    +revokeAccess()
+  }
+
+  class Role {
+    +String name
+    +Set<Permission> permissions
+  }
+
+  class Permission {
+    +String action
+    +String resource
+  }
+
+  User "1" -- "*" House : owns
+  User "1" -- "*" UserPermission : grants access
+  House "1" -- "*" UserPermission
+  Role "1" -- "*" Permission
+  User "1" -- "1" Role
+}
+
+' ===== Device Service =====
+package "Device Service" {
+  class DeviceType {
+    +UUID id
+    +String name
+    +String category
+    +boolean supportsTelemetry
+    +String firmwareVersion
+  }
+
+  class Device {
+    +UUID id
+    +UUID typeId
+    +UUID houseId
+    +String serialNumber
+    +String name
+    +DeviceStatus status
+    +turnOn()
+    +turnOff()
+    +applyConfig(config: DeviceConfig)
+    +getState()
+  }
+
+  class DeviceConfig {
+    +UUID id
+    +UUID deviceId
+    +String paramKey
+    +String paramValue
+    +validate()
+  }
+
+  class DeviceLog {
+    +UUID id
+    +UUID deviceId
+    +String eventType
+    +DateTime timestamp
+    +String message
+  }
+
+  DeviceType "1" -- "*" Device : defines type
+  Device "1" -- "*" DeviceConfig : has config
+  Device "1" -- "*" DeviceLog : generates
+}
+
+' ===== Telemetry Service =====
+package "Telemetry Service" {
+  class TelemetryData {
+    +UUID id
+    +UUID deviceId
+    +DateTime timestamp
+    +String key
+    +float value
+    +normalize()
+  }
+
+  class TelemetrySummary {
+    +UUID id
+    +UUID deviceId
+    +String interval
+    +float avgValue
+    +float maxValue
+    +float minValue
+    +recalculate()
+  }
+
+  class AlertRule {
+    +UUID id
+    +UUID deviceId
+    +String metricKey
+    +String condition
+    +String action
+    +evaluate(data: TelemetryData)
+  }
+
+  class AlertLog {
+    +UUID id
+    +UUID ruleId
+    +DateTime triggeredAt
+    +String message
+  }
+
+  Device "1" -- "*" TelemetryData : sends
+  TelemetryData "1" -- "0..1" TelemetrySummary : summarized as
+  TelemetryData --> AlertRule : triggers evaluation
+  AlertRule --> AlertLog : logs if triggered
+}
+
+@enduml

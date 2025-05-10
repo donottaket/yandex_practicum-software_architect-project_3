@@ -1,0 +1,106 @@
+@startuml containers
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Диаграмма контейнеров: Система «Тёплый дом»
+
+' --- Участники ---
+Person(user, "Пользователь", "Управляет домом через веб или мобильное приложение")
+Person(admin, "Администратор", "Администрирует систему через админ-панель")
+Person(support, "Саппорт", "Поддерживает пользователей через саппорт-панель")
+
+System_Boundary(s1, "Система умного дома") {
+
+    ' --- Service Registry ---
+    Container(service_registry, "Service Registry", "Eureka / Consul", "Хранит информацию о доступных сервисах")
+
+    ' --- Gateway ---
+    Container(gateway, "API Gateway", "Spring Cloud Gateway", "Маршрутизация, балансировка, защита")
+    Rel(gateway, service_registry, "Запрашивает маршруты", "HTTP")
+
+    ' --- BFF ---
+    Container(bff_web, "BFF (Web)", "Node.js / Python", "Адаптация API под веб-клиент")
+    Container(bff_mobile, "BFF (Mobile)", "Node.js / Python", "Адаптация API под мобильный клиент")
+    Rel(bff_web, service_registry, "Регистрируется / запрашивает", "HTTP")
+    Rel(bff_mobile, service_registry, "Регистрируется / запрашивает", "HTTP")
+
+    ' --- Auth Service ---
+    Container(auth_service, "Auth Service", "Keycloak / OAuth2", "Аутентификация и авторизация")
+    Rel(auth_service, service_registry, "Регистрируется", "HTTP")
+
+    ' --- Пользователи ---
+    Container_Boundary(users, "Пользователи") {
+        Container(users_api, "User API", "FastAPI", "Профиль, роли, ACL")
+        ContainerDb(users_db, "User DB", "PostgreSQL", "Хранение пользователей")
+        Rel(users_api, users_db, "SQL")
+        Rel(users_api, service_registry, "Регистрируется", "HTTP")
+    }
+
+    ' --- Устройства ---
+    Container_Boundary(devices, "Устройства") {
+        Container(devices_api, "Device API", "FastAPI", "Регистрация и управление")
+        ContainerDb(devices_db, "Device DB", "PostgreSQL", "Конфигурации устройств")
+        Rel(devices_api, devices_db, "SQL")
+        Rel(devices_api, service_registry, "Регистрируется", "HTTP")
+    }
+
+    ' --- Телеметрия ---
+    Container_Boundary(monitoring, "Телеметрия") {
+        Container(monitoring_api, "Telemetry API", "FastAPI", "Сбор и запрос телеметрии")
+        ContainerDb(monitoring_db, "Telemetry DB", "TimescaleDB", "История измерений")
+        Rel(monitoring_api, monitoring_db, "SQL")
+        Rel(monitoring_api, service_registry, "Регистрируется", "HTTP")
+    }
+
+    ' --- Уведомления ---
+    Container(notify_api, "Notification Service", "Python", "Отправка push/email")
+    Rel(notify_api, service_registry, "Регистрируется", "HTTP")
+
+    ' --- MQTT брокер ---
+    ContainerQueue(mqtt_broker, "MQTT Broker", "Mosquitto", "Приём/отправка событий от устройств")
+
+    ' --- Панели и клиенты ---
+    Container(web_app, "Web App", "React", "Панель пользователя (в браузере)")
+    Container(mobile_app, "Mobile App", "Flutter", "Панель пользователя (мобильное)")
+    Container(admin_panel, "Admin Panel", "Angular", "Панель администратора")
+    Container(support_panel, "Support Panel", "Angular", "Панель поддержки")
+
+    ' --- Взаимодействия клиентов с системой ---
+    Rel(user, web_app, "Взаимодействует", "HTTPS")
+    Rel(user, mobile_app, "Взаимодействует", "HTTPS")
+    Rel(admin, admin_panel, "Администрирует", "HTTPS")
+    Rel(support, support_panel, "Оказывает поддержку", "HTTPS")
+
+    Rel(web_app, gateway, "Запросы", "HTTPS")
+    Rel(mobile_app, gateway, "Запросы", "HTTPS")
+    Rel(admin_panel, gateway, "Запросы", "HTTPS")
+    Rel(support_panel, gateway, "Запросы", "HTTPS")
+
+    ' --- Gateway → BFF ---
+    Rel(gateway, bff_web, "Маршрутизация Web", "HTTPS")
+    Rel(gateway, bff_mobile, "Маршрутизация Mobile", "HTTPS")
+
+    ' --- BFF → сервисы ---
+    Rel(bff_web, auth_service, "OAuth2")
+    Rel(bff_web, users_api, "REST")
+    Rel(bff_web, devices_api, "REST")
+    Rel(bff_web, monitoring_api, "REST")
+    Rel(bff_web, notify_api, "REST")
+
+    Rel(bff_mobile, auth_service, "OAuth2")
+    Rel(bff_mobile, users_api, "REST")
+    Rel(bff_mobile, devices_api, "REST")
+    Rel(bff_mobile, monitoring_api, "REST")
+    Rel(bff_mobile, notify_api, "REST")
+
+    ' --- MQTT брокер ---
+    Rel(devices_api, mqtt_broker, "Отправляет команды", "MQTT")
+    Rel(mqtt_broker, monitoring_api, "Передаёт телеметрию", "MQTT")
+}
+
+' --- IoT устройства ---
+Container_Ext(device, "IoT-устройство", "Sensor / Actuator", "Датчики, реле, термостаты")
+Rel(device, mqtt_broker, "Публикует телеметрию", "MQTT")
+Rel(mqtt_broker, device, "Отправляет команды", "MQTT")
+
+@enduml
