@@ -6,9 +6,7 @@
 table(User) {
   primary_key(id): UUID
   email: string
-  password_hash: string
   full_name: string
-  role: enum
 }
 
 table(House) {
@@ -18,16 +16,13 @@ table(House) {
   address: string
 }
 
-table(UserPermission) {
+table(HouseDevice) {
   primary_key(id): UUID
-  foreign_key(user_id): UUID
   foreign_key(house_id): UUID
-  access_level: enum
 }
 
-User --> House : 1 ко многим
-User --> UserPermission
-House --> UserPermission
+User --> House
+House --> HouseDevice
 
 !define table(x) class x << (T,#AAF0D1) >>
 !define primary_key(x) <u>x</u>

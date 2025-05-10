@@ -1,9 +1,9 @@
 @startuml components
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
-' ===== Device API =====
 title "Диаграммы компонентов: Device API, User API, Telemetry API"
 
+' ===== Device API =====
 Container_Boundary(devices_api, "devices_api (FastAPI)") {
   Component(device_controller, "DeviceController", "FastAPI", "Обрабатывает REST-запросы для управления устройствами")
   Component(device_service, "DeviceService", "Python", "Бизнес-логика управления устройствами")
@@ -24,7 +24,7 @@ Rel(device_commander, device, "MQTT / HTTP", "Команды")
 ' ===== User API =====
 Container_Boundary(users_api, "users_api (FastAPI)") {
   Component(user_controller, "UserController", "FastAPI", "Обрабатывает запросы пользователя и администратора")
-  Component(user_service, "UserService", "Python", "Логика управления профилем и ролями")
+  Component(user_service, "UserService", "Python", "Логика управления профилем")
   Component(user_repo, "UserRepository", "SQLAlchemy", "Работа с таблицами пользователей")
 
   Rel(user_controller, user_service, "Вызывает")

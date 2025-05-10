@@ -5,12 +5,8 @@ package "User Service" {
   class User {
     +UUID id
     +String email
-    +String passwordHash
     +String fullName
-    +Role role
-    +login(credentials)
     +updateProfile(data)
-    +changePassword(old, new)
   }
 
   class House {
@@ -22,30 +18,7 @@ package "User Service" {
     +removeDevice(deviceId)
   }
 
-  class UserPermission {
-    +UUID id
-    +UUID userId
-    +UUID houseId
-    +AccessLevel accessLevel
-    +grantAccess()
-    +revokeAccess()
-  }
-
-  class Role {
-    +String name
-    +Set<Permission> permissions
-  }
-
-  class Permission {
-    +String action
-    +String resource
-  }
-
   User "1" -- "*" House : owns
-  User "1" -- "*" UserPermission : grants access
-  House "1" -- "*" UserPermission
-  Role "1" -- "*" Permission
-  User "1" -- "1" Role
 }
 
 ' ===== Device Service =====
