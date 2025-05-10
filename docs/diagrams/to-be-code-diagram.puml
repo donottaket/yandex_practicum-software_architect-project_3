@@ -1,0 +1,111 @@
+@startuml code
+
+' ===== User Service =====
+package "User Service" {
+  class User {
+    +UUID id
+    +String email
+    +String fullName
+    +updateProfile(data)
+  }
+
+  class House {
+    +UUID id
+    +UUID userId
+    +String name
+    +String address
+    +addDevice(device: Device)
+    +removeDevice(deviceId)
+  }
+
+  User "1" -- "*" House : owns
+}
+
+' ===== Device Service =====
+package "Device Service" {
+  class DeviceType {
+    +UUID id
+    +String name
+    +String category
+    +boolean supportsTelemetry
+    +String firmwareVersion
+  }
+
+  class Device {
+    +UUID id
+    +UUID typeId
+    +UUID houseId
+    +String serialNumber
+    +String name
+    +DeviceStatus status
+    +turnOn()
+    +turnOff()
+    +applyConfig(config: DeviceConfig)
+    +getState()
+  }
+
+  class DeviceConfig {
+    +UUID id
+    +UUID deviceId
+    +String paramKey
+    +String paramValue
+    +validate()
+  }
+
+  class DeviceLog {
+    +UUID id
+    +UUID deviceId
+    +String eventType
+    +DateTime timestamp
+    +String message
+  }
+
+  DeviceType "1" -- "*" Device : defines type
+  Device "1" -- "*" DeviceConfig : has config
+  Device "1" -- "*" DeviceLog : generates
+}
+
+' ===== Telemetry Service =====
+package "Telemetry Service" {
+  class TelemetryData {
+    +UUID id
+    +UUID deviceId
+    +DateTime timestamp
+    +String key
+    +float value
+    +normalize()
+  }
+
+  class TelemetrySummary {
+    +UUID id
+    +UUID deviceId
+    +String interval
+    +float avgValue
+    +float maxValue
+    +float minValue
+    +recalculate()
+  }
+
+  class AlertRule {
+    +UUID id
+    +UUID deviceId
+    +String metricKey
+    +String condition
+    +String action
+    +evaluate(data: TelemetryData)
+  }
+
+  class AlertLog {
+    +UUID id
+    +UUID ruleId
+    +DateTime triggeredAt
+    +String message
+  }
+
+  Device "1" -- "*" TelemetryData : sends
+  TelemetryData "1" -- "0..1" TelemetrySummary : summarized as
+  TelemetryData --> AlertRule : triggers evaluation
+  AlertRule --> AlertLog : logs if triggered
+}
+
+@enduml

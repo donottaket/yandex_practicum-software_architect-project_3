@@ -1,0 +1,17 @@
+@startuml context
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Context.puml
+
+title Контекстная диаграмма: Система «Тёплый дом»
+
+Person(client, "Клиент", "Использует систему «Тёплый дом» для управления отоплением")
+
+System(system, "Монолитное приложение системы «Тёплый дом»", "Позволяет управлять отоплением и просматривать текущую температуру")
+
+System_Ext(heatingSystem, "Оборудование отопления", "Предоставляет возможность управлять отоплением")
+System_Ext(temperatureSensor, "Датчики температуры", "Отправляют текущую температуру по запросу")
+
+Rel(client, system, "Просматривает температуру и управляет отоплением")
+Rel(system, heatingSystem, "Отправляет команды на включение/выключение")
+Rel(system, temperatureSensor, "Запрашивает текущую температуру")
+
+@enduml

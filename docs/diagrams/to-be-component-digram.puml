@@ -1,0 +1,54 @@
+@startuml components
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title "Диаграммы компонентов: Device API, User API, Telemetry API"
+
+' ===== Device API =====
+Container_Boundary(devices_api, "devices_api (FastAPI)") {
+  Component(device_controller, "DeviceController", "FastAPI", "Обрабатывает REST-запросы для управления устройствами")
+  Component(device_service, "DeviceService", "Python", "Бизнес-логика управления устройствами")
+  Component(device_repo, "DeviceRepository", "SQLAlchemy", "Работает с таблицами устройств")
+  Component(device_commander, "DeviceCommander", "MQTT / HTTP", "Посылает команды на физические устройства")
+
+  Rel(device_controller, device_service, "Вызывает")
+  Rel(device_service, device_repo, "Читает/пишет в БД")
+  Rel(device_service, device_commander, "Посылает команды")
+}
+
+ContainerDb(devices_db, "Device DB", "PostgreSQL", "Хранит данные об устройствах")
+Rel(device_repo, devices_db, "SQL")
+Container_Ext(device, "IoT-устройство", "Sensor / Actuator", "Физическое устройство")
+Rel(device_commander, device, "MQTT / HTTP", "Команды")
+
+
+' ===== User API =====
+Container_Boundary(users_api, "users_api (FastAPI)") {
+  Component(user_controller, "UserController", "FastAPI", "Обрабатывает запросы пользователя и администратора")
+  Component(user_service, "UserService", "Python", "Логика управления профилем")
+  Component(user_repo, "UserRepository", "SQLAlchemy", "Работа с таблицами пользователей")
+
+  Rel(user_controller, user_service, "Вызывает")
+  Rel(user_service, user_repo, "Читает/пишет в БД")
+}
+
+ContainerDb(users_db, "User DB", "PostgreSQL", "Хранит данные о пользователях")
+Rel(user_repo, users_db, "SQL")
+
+
+' ===== Telemetry API =====
+Container_Boundary(telemetry_api, "telemetry_api (FastAPI)") {
+  Component(telemetry_receiver, "TelemetryReceiver", "MQTT / Kafka", "Получает данные с устройств")
+  Component(telemetry_service, "TelemetryService", "Python", "Обработка и агрегация телеметрии")
+  Component(telemetry_repo, "TelemetryRepository", "TimescaleDB", "Сохраняет и запрашивает временные ряды")
+  Component(telemetry_controller, "TelemetryController", "FastAPI", "Предоставляет API для чтения телеметрии")
+
+  Rel(telemetry_receiver, telemetry_service, "Обрабатывает данные")
+  Rel(telemetry_service, telemetry_repo, "Сохраняет данные")
+  Rel(telemetry_controller, telemetry_repo, "Читает данные")
+}
+
+ContainerDb(telemetry_db, "Telemetry DB", "TimescaleDB", "Хранит временные ряды")
+Rel(telemetry_repo, telemetry_db, "SQL")
+Rel(device, telemetry_receiver, "Публикует телеметрию", "MQTT / Kafka")
+
+@enduml
